@@ -14,14 +14,12 @@ import TWEEN from '@tweenjs/tween.js';
 import { Camera } from 'three';
 
 const enum Direction {
-  Up = 1, // lépés felfelé, a tömb vége felé
-  Down = -1, // lépés lefelé, a tömb elejére
+  Up = 1,
+  Down = -1,
 }
 
-// van kiválasztott emelet és az összes többi, minden emelet váltáskor az összes 'area'-t átszinezi
 const levelColorDefault = 'bdbdbd';
 const levelColorSelected = '8b8b8b';
-// 'area' szinek, amelyikre éppen rákattintott (tap-elt) és az alapértelmzett szín.
 const hexAreaDefaultColor = 0x8b8b8b;
 const hexAreaSelectedColor = 0x003caf;
 
@@ -75,7 +73,6 @@ export class Building3dComponent implements OnInit {
     this.renderAnimation();
   }
 
-  // scroll-ok eltünetetése (mivel a canvas-t a threejs hozza létre, a style-t 'ár kell apply-zni' külön)
   ngAfterViewInit() {
     (document.querySelector('canvas') as HTMLElement).style.display = 'block';
   }
@@ -120,14 +117,11 @@ export class Building3dComponent implements OnInit {
     //controls.minZoom = 0.5; // only OrthographicCamera
     //controls.maxZoom = 2.0; // only OrthographicCamera
     controls.enablePan = false;
-    // a 'zoom' távolságot 'init'-nél is be kell állítani, mert a szintek láthatóságát ez (is) befolyásolja
     this.zoomDist = this._CAMERA.position.distanceTo({ x: 0, y: 0, z: 0 });
     controls.addEventListener('change', () => {
       this.zoomDist = this._CAMERA.position.distanceTo({ x: 0, y: 0, z: 0 });
       this.toggleFloorVisibility();
     });
-    // a forgatás után kicsit még 'lökje tovább' (impulzusmegmaradás)
-    // Note that if this is enabled, you must call .update () in your animation loop.
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     controls.update();
@@ -143,12 +137,9 @@ export class Building3dComponent implements OnInit {
       this.searchTarget.bind(this)
     );
 
-    // ablak ujraméretezés
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
-
     // Resizes the output canvas to match the supplied width/height parameters
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-
     // Attach the canvas, where the renderer draws the scene, to the specified DOM element
     this.renderer.domElement;
     this._ELEMENT.appendChild(this.renderer.domElement);
@@ -159,7 +150,8 @@ export class Building3dComponent implements OnInit {
     this._AREAS = [];
     this._LABELS = [];
 
-    const modelpath = '../../assets/models/';
+    const modelpath =
+      'https://raw.githubusercontent.com/pzsprog/ionic-angular-threejs-3dmall/master/src/app/assets/';
     const defaultColor = '#e6f2ff';
 
     // let light = new THREE.AmbientLight( 0x404040 );
@@ -176,12 +168,13 @@ export class Building3dComponent implements OnInit {
     spotLight.target.position.set(0, 0, 0);
     this._SCENE.add(spotLight.target);
 
-    // 2d sprite-ok betöltése
     const textureLoader = new THREE.TextureLoader();
     let spriteMaterials = [];
     for (let i = 0; i < 10; i++) {
       let spriteMaterial = new THREE.SpriteMaterial({
-        map: textureLoader.load(`../../assets/markers/marker_${i}.png`),
+        map: textureLoader.load(
+          `https://raw.githubusercontent.com/pzsprog/ionic-angular-threejs-3dmall/master/src/app/assets/marker_${i}.png`
+        ),
         depthTest: false,
       });
       spriteMaterials.push(spriteMaterial);
@@ -201,7 +194,6 @@ export class Building3dComponent implements OnInit {
             transparent: true,
             emissive: defaultColor,
           });
-          // 2D sptite-ok elkészítése
           let randomSpriteIndex = Math.floor(Math.random() * Math.floor(10));
           let sprite = this.makeSprite(
             spriteMaterials[randomSpriteIndex],
@@ -209,7 +201,6 @@ export class Building3dComponent implements OnInit {
           );
           this._LABELS.push({ parent: area, label: sprite });
           this._SCENE.add(sprite);
-          // 'szoba' (area) elkészítése
           //area.geometry.computeFaceNormals();
           area.geometry.computeVertexNormals();
           //area.material.emissive.set(color);
@@ -220,11 +211,8 @@ export class Building3dComponent implements OnInit {
         });
         this._SCENE.add(floor); // group
         this.selectedFloorIndex = this._FLOORS.length - 1;
-        // kijelölt szint label update
         this.updateLevelInfoText(this.selectedFloorIndex + 1);
-        // szintek szinezése
         this.updateFloorMaterials();
-        // szintek pozicionálása
         this.updateFloorPositions();
       });
     });
@@ -294,7 +282,6 @@ export class Building3dComponent implements OnInit {
     }*/
   }
 
-  // GLTF kiírása console-ra -> ÍGY: console.log(this.dumpObject(root).join('\n'));
   dumpObject(obj, lines = [], isLast = true, prefix = '') {
     const localPrefix = isLast ? '└─' : '├─';
     lines.push(
@@ -315,7 +302,6 @@ export class Building3dComponent implements OnInit {
     //event.preventDefault();
     //if (event.cancelable) event.preventDefault();
 
-    // mivel a touch-nak es a click-nek is van clientX, clientY property-je
     let input;
     if (event.type === 'touchstart') {
       input = event.touches[0] || event.changedTouches[0]; // touchstart
@@ -351,7 +337,6 @@ export class Building3dComponent implements OnInit {
     }
   }
 
-  // szinezze át a 'szinteket'
   updateFloorMaterials(): void {
     this._FLOORS.forEach((floor, key) => {
       let floorIndex = Number(key);
@@ -506,7 +491,6 @@ export class Building3dComponent implements OnInit {
     if (this.areaSelected === area) {
       return;
     }
-    // csak akkor kell átszinezni, ha ugyanazon a szinten vannak
     if (
       this.areaSelected !== undefined &&
       area.parent.uuid === this.areaSelected.parent.uuid
